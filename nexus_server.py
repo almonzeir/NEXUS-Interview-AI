@@ -749,12 +749,18 @@ async def setup_interview(
         session["cv_text"] = cv_text
         session["cv_analysis"] = analyze_cv(cv_text)
         t2 = time.time()
+        if "error" in session["cv_analysis"]:
+            print(f"  ⚠️ CV parse issue, using raw data")
+            session["cv_analysis"] = {"skills": [], "experience": [], "raw": cv_text[:500]}
         print(f"  ✅ CV analyzed ({t2-t1:.1f}s)")
 
         print("📋 Analyzing Job Description...")
         session["jd_text"] = jd_text
         session["jd_analysis"] = analyze_jd(jd_text)
         t3 = time.time()
+        if "error" in session["jd_analysis"]:
+            print(f"  ⚠️ JD parse issue, using raw data")
+            session["jd_analysis"] = {"required_skills": [], "responsibilities": [], "raw": jd_text[:500]}
         print(f"  ✅ JD analyzed ({t3-t2:.1f}s)")
 
         print("🔍 Analyzing gaps...")

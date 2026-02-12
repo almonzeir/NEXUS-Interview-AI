@@ -903,8 +903,11 @@
                 const r = await fetch(API() + '/setup', { method: 'POST', body: fd });
                 const d = await r.json();
 
+                if (d.error) throw new Error(d.error);
+                if (!d.gap_analysis) throw new Error("No gap analysis data received. Check server logs.");
+                if (d.gap_analysis.error) throw new Error("LLM parsing failed: " + (d.gap_analysis.raw || "").substring(0, 200));
+
                 // Fill Chips
-                if (!d.gap_analysis) throw new Error("Analysis failed. Please try again.");
 
                 renderChips('chipsMatch', d.gap_analysis.matched_skills, 'match');
                 renderChips('chipsMiss', d.gap_analysis.missing_skills, 'miss');
