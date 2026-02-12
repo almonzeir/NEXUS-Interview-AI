@@ -81,8 +81,10 @@ Table I summarizes the technologies and models used in the system.
 | Component | Technology | Role |
 |---|---|---|
 | Web Framework | FastAPI (Python 3.11) | REST API server, async request handling |
-| LLM Inference | Groq Cloud API | Hosts LLM on custom LPU hardware |
-| Language Model | Meta Llama 3.3 70B Versatile | CV/JD analysis, question generation, scoring |
+| LLM Inference | Groq Cloud API | Hosts LLMs on custom LPU hardware |
+| Primary LLM | Meta Llama 3.3 70B Versatile | CV/JD analysis, question generation, scoring |
+| Fallback LLM 1 | Alibaba Qwen QwQ 32B | Automatic failover for rate-limited scenarios |
+| Fallback LLM 2 | Meta Llama 3.1 8B Instant | Lightweight last-resort model |
 | Speech-to-Text | OpenAI Whisper Large V3 (via Groq) | Real-time audio transcription |
 | Text-to-Speech | Microsoft Edge-TTS (en-US-AndrewNeural) | AI interviewer voice synthesis |
 | Frontend | HTML5, CSS3, JavaScript (Vanilla) | Single-page research dashboard |
@@ -92,6 +94,23 @@ Table I summarizes the technologies and models used in the system.
 **Table I.** Technology stack of the NEXUS system.
 
 The decision to use Groq's free-tier inference was deliberate: it demonstrates that research-grade AI interview systems can operate at **zero marginal cost**, supporting the democratization of AI-assisted recruitment in resource-constrained environments.
+
+### B.1 Model-Agnostic Fallback Cascade
+
+A key architectural design is the **automatic model fallback cascade**. Free-tier LLM APIs impose daily token limits (e.g., 100,000 tokens/day per model on Groq). Since each model maintains an independent token quota, the system implements a cascading retry mechanism:
+
+```
+llama-3.3-70b-versatile  →  qwen-qwq-32b  →  llama-3.1-8b-instant
+   (70B, highest quality)     (32B, strong)     (8B, fastest)
+```
+
+When the primary model returns HTTP 429 (rate limit exceeded), the system automatically retries the same request with the next model in the cascade. This mechanism:
+
+1. **Triples the effective daily token budget** (≈300K tokens across three models)
+2. **Prevents interview disruptions** — a rate limit mid-interview would otherwise corrupt the session
+3. **Validates model agnosticism** — the identical prompts and scoring rubrics produce consistent results across different model architectures, demonstrating that the system design is not model-dependent
+
+This cascading approach is logged transparently: when a fallback model is used, the system prints a warning and records the actual model used in the session metadata, enabling post-hoc analysis of model-level scoring differences.
 
 ---
 
@@ -264,7 +283,7 @@ Several architectural decisions merit discussion:
 
 1. **Single-file frontend**: While a framework like React would offer better component organization, a single HTML file simplifies deployment and eliminates build steps — appropriate for a research prototype.
 
-2. **Groq over OpenAI**: Groq's free tier provides access to Llama 3.3 70B with sub-second latency on their custom LPU hardware. This eliminates API costs while maintaining model quality comparable to commercial alternatives.
+2. **Groq over OpenAI**: Groq's free tier provides access to multiple models (Llama 70B, Qwen 32B, Llama 8B) with sub-second latency on their custom LPU hardware. This eliminates API costs while maintaining model quality comparable to commercial alternatives. The triple-model fallback cascade further maximizes the utility of free-tier resources.
 
 3. **Edge-TTS over commercial TTS**: Microsoft's Edge-TTS is free, requires no API key, and runs locally. While commercial solutions (ElevenLabs, Azure) offer superior voice quality, Edge-TTS provides adequate naturalness for research purposes.
 

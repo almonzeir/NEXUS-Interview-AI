@@ -158,6 +158,10 @@ def call_llm(messages: list, max_tokens: int = 1000, temperature: float = 0.7) -
             )
             if model != LLM_MODEL:
                 print(f"  ⚡ Used fallback model: {model}")
+            # Track which model was actually used (for research integrity)
+            if "models_used" not in session:
+                session["models_used"] = []
+            session["models_used"].append(model)
             return clean_llm_response(response.choices[0].message.content)
         except Exception as e:
             if "429" in str(e) or "rate_limit" in str(e).lower():
