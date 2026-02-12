@@ -959,8 +959,16 @@
 
         // ── STEP 2: INTERVIEW ──
         function startInterview() {
+            const btn = document.getElementById('btnStart');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.innerText = "Starting...";
+
             document.getElementById('screenSetup').classList.remove('active');
             document.getElementById('screenInterview').classList.add('active');
+
+            // Clear previous messages if any
+            document.getElementById('msgPanel').innerHTML = '<div style="text-align:center; color:var(--text-3); font-size:0.8rem">Conversation will appear here</div>';
 
             // Trigger welcome greeting + first question
             document.getElementById('liveTranscript').innerText = "AI Interviewer is speaking...";

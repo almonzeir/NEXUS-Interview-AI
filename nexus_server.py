@@ -877,8 +877,8 @@ Generate a warm but professional welcome greeting that:
 3. Explains the format (voice-based, several questions, just be natural)
 4. Naturally transitions into the first question
 
-Keep it to 4-5 sentences total. Speak naturally. No markdown, no bullet points.
-End by asking the first question."""},
+Keep it concise (2-3 sentences max). Speak naturally. No markdown.
+End by asking the first question directly."""},
             {"role": "user", "content": f"""Candidate name: {candidate_name or 'the candidate'}
 First question to ask: \"{first_question}\"
 
@@ -904,8 +904,9 @@ Generate the welcome greeting that ends with this first question."""}
             audio_path,
             media_type="audio/mpeg",
             headers={
-                "X-Response": welcome.replace('\n', ' ')[:500],
-                "X-Welcome": "true"
+                "X-Response": welcome.replace('\n', ' ')[:4000],  # Increased limit for full text
+                "X-Welcome": "true",
+                "Access-Control-Expose-Headers": "X-Response"
             }
         )
 
