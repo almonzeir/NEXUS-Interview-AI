@@ -825,12 +825,14 @@
                 const d = await r.json();
 
                 // Fill Chips
-                renderChips('chipsMatch', d.analysis.match.matched_skills, 'match');
-                renderChips('chipsMiss', d.analysis.match.missing_skills, 'miss');
-                renderChips('chipsProbe', d.analysis.match.probe_areas.map(p => p.area), 'probe');
+                if (!d.gap_analysis) throw new Error("Analysis failed. Please try again.");
+
+                renderChips('chipsMatch', d.gap_analysis.matched_skills, 'match');
+                renderChips('chipsMiss', d.gap_analysis.missing_skills, 'miss');
+                renderChips('chipsProbe', d.gap_analysis.probe_areas ? d.gap_analysis.probe_areas.map(p => p.area) : [], 'probe');
 
                 // Match Score
-                const score = d.analysis.match.match_score || 0;
+                const score = d.gap_analysis.match_score || 0;
                 document.getElementById('matchScore').innerText = score + '%';
                 document.querySelector('.score-circle').style.background = `conic-gradient(var(--primary) ${score}%, rgba(255,255,255,0.1) ${score}%)`;
 
