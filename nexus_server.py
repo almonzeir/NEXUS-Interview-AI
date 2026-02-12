@@ -69,8 +69,11 @@ print("✅ Groq API connected")
 
 # ── Models ──
 STT_MODEL = "whisper-large-v3"       # OpenAI Whisper — MIT License
-LLM_MODEL = "llama-3.3-70b-versatile"  # Meta Llama 3.3 70B — Production, Apache 2.0
-LLM_FALLBACK = "llama-3.1-8b-instant"  # Fallback when rate-limited (separate token bucket)
+LLM_MODEL = "llama-3.3-70b-versatile"  # Primary: Meta Llama 3.3 70B
+LLM_FALLBACKS = [                      # Fallback cascade (separate rate limits each)
+    "qwen-qwq-32b",                   # Alibaba Qwen QwQ 32B — strong reasoning
+    "llama-3.1-8b-instant",           # Meta Llama 3.1 8B — fast, lightweight
+]
 TTS_VOICE = "en-US-AndrewNeural"     # Professional male voice (Microsoft Andrew)
 
 print(f"👂 STT: {STT_MODEL}")
@@ -143,8 +146,9 @@ def clean_llm_response(text: str) -> str:
 
 
 def call_llm(messages: list, max_tokens: int = 1000, temperature: float = 0.7) -> str:
-    """Call the LLM via Groq with automatic fallback on rate limit."""
-    for model in [LLM_MODEL, LLM_FALLBACK]:
+    """Call the LLM via Groq with automatic fallback cascade on rate limit."""
+    models_to_try = [LLM_MODEL] + LLM_FALLBACKS
+    for model in models_to_try:
         try:
             response = client.chat.completions.create(
                 model=model,
