@@ -1068,8 +1068,8 @@
             </div>
 
             <div style="text-align:center;margin-top:1rem">
-                <input id="serverUrl" value="http://localhost:8000"
-                    style="background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);padding:0.4rem 0.8rem;border-radius:6px;font-size:0.75rem;font-family:var(--mono);outline:none;width:200px;text-align:center" />
+                <input id="serverUrl"
+                    style="background:var(--bg-input);border:1px solid var(--border);color:var(--text-2);padding:0.4rem 0.8rem;border-radius:6px;font-size:0.75rem;font-family:var(--mono);outline:none;width:280px;text-align:center" />
             </div>
         </div>
     </div>
@@ -1122,6 +1122,12 @@
         let totalScore = 0, scoreCount = 0, questionNum = 0, totalQuestions = 0;
         let audioCtx, analyser, waveData;
         const API = () => document.getElementById('serverUrl').value.replace(/\/$/, '');
+
+        // Auto-detect server URL (works on Railway AND localhost)
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlInput = document.getElementById('serverUrl');
+            urlInput.value = window.location.origin;
+        });
 
         // DOM
         const msgBox = document.getElementById('msgContainer');
