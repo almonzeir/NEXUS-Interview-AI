@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+groq
+edge-tts
+python-multipart
+python-dotenv
+pydantic
+shutil
+anyio
+httpx
+distro

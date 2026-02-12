@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+sessions/
+research_data/
+*.mp3
+*.wav
+*.webm
+.vscode/
+.idea/
+tmp/
