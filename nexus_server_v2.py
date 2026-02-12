@@ -145,7 +145,7 @@ async def start_interview(session_id: str = Form(...)):
             audio_path,
             media_type="audio/mpeg",
             headers={
-                "X-Response": welcome_text[:2000] if welcome_text else "", # safe header length
+                "X-Response": welcome_text[:4000] if welcome_text else "", # safe header length
                 "X-Session-ID": session_id,
                 "Access-Control-Expose-Headers": "X-Response, X-Session-ID"
             }
@@ -213,7 +213,7 @@ async def chat_loop(
             media_type="audio/mpeg",
             headers={
                 "X-Transcript": transcript[:500] if transcript else "",
-                "X-Response": response_text[:500] if response_text else "", # Truncate for headers
+                "X-Response": response_text[:4000] if response_text else "", # Truncate for headers
                 "X-Score": latest_score,
                 "X-Complete": "true" if is_complete else "false",
                 "Access-Control-Expose-Headers": "X-Transcript, X-Response, X-Score, X-Complete"

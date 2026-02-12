@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +18,11 @@
             --text-secondary: #94a3b8;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
@@ -48,9 +53,29 @@
         }
 
         /* ── COMPONENTS ── */
-        h1, h2, h3 { font-weight: 600; letter-spacing: -0.02em; }
-        h1 { font-size: 1.25rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem; }
-        h2 { font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+        h1,
+        h2,
+        h3 {
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2 {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
 
         .card {
             background: rgba(255, 255, 255, 0.03);
@@ -85,8 +110,14 @@
             width: 100%;
         }
 
-        button:hover { filter: brightness(1.1); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:hover {
+            filter: brightness(1.1);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
         .status-badge {
             display: inline-flex;
@@ -100,16 +131,36 @@
         }
 
         /* ── GAP VISUALIZATION ── */
-        .chip-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .chip-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
         .chip {
             padding: 0.25rem 0.5rem;
             border-radius: 0.25rem;
             font-size: 0.75rem;
             border: 1px solid transparent;
         }
-        .chip.match { background: rgba(16, 185, 129, 0.1); color: #34d399; border-color: rgba(16, 185, 129, 0.2); }
-        .chip.missing { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
-        .chip.probe { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border-color: rgba(245, 158, 11, 0.2); }
+
+        .chip.match {
+            background: rgba(16, 185, 129, 0.1);
+            color: #34d399;
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .chip.missing {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .chip.probe {
+            background: rgba(245, 158, 11, 0.1);
+            color: #fbbf24;
+            border-color: rgba(245, 158, 11, 0.2);
+        }
 
         /* ── INTERVIEW INTERFACE ── */
         #interview-screen {
@@ -161,14 +212,29 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); border-top-color: transparent; }
-            100% { transform: rotate(360deg); border-top-color: transparent; }
+            0% {
+                transform: rotate(0deg);
+                border-top-color: transparent;
+            }
+
+            100% {
+                transform: rotate(360deg);
+                border-top-color: transparent;
+            }
         }
 
         .transcript-box {
@@ -199,7 +265,9 @@
             font-size: 0.85rem;
         }
 
-        .metric-value { font-weight: 600; }
+        .metric-value {
+            font-weight: 600;
+        }
 
         /* ── CAMERA ── */
         .camera-preview {
@@ -219,7 +287,8 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: scaleX(-1); /* Mirror effect */
+            transform: scaleX(-1);
+            /* Mirror effect */
         }
 
         .eye-status {
@@ -227,7 +296,7 @@
             top: 0.5rem;
             left: 0.5rem;
             font-size: 0.65rem;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             padding: 2px 4px;
             border-radius: 4px;
             color: #10b981;
@@ -241,16 +310,17 @@
             max-width: 900px;
             margin: 0 auto;
         }
-
     </style>
 </head>
+
 <body>
 
     <!-- SIDEBAR -->
     <div class="sidebar">
         <h1>
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
             </svg>
             NEXUS <span style="font-size: 0.7em; opacity: 0.6;">v3.1</span>
         </h1>
@@ -274,7 +344,8 @@
         </div>
 
         <div id="controls">
-            <button id="reset-btn" style="background: var(--surface-color); border: 1px solid var(--border-color);">Reset Session</button>
+            <button id="reset-btn"
+                style="background: var(--surface-color); border: 1px solid var(--border-color);">Reset Session</button>
         </div>
     </div>
 
@@ -318,9 +389,14 @@ Requirements: Python, AWS, Docker...
                 </div>
             </div>
 
+            <!-- VISUALIZER CANVAS -->
+            <canvas id="canvasFx"
+                style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:100%; height:100%; pointer-events:none; opacity:0.6; z-index:0;"></canvas>
+
             <div class="mic-visualizer" id="mic-btn">
                 <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
             </div>
 
@@ -355,6 +431,8 @@ Requirements: Python, AWS, Docker...
         let eyeContactMetrics = [];
         let eyeTrackingInterval = null;
         let cameraEnabled = false;
+        let currentAudio = null; // Track active audio for interruption
+        let audioCtx, analyser, source, animationId; // Visualizer vars
 
         // ── ELEMENTS ──
         const setupScreen = document.getElementById('setup-screen');
@@ -518,6 +596,15 @@ Requirements: Python, AWS, Docker...
             if (!sessionId) return;
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                // Connect Visualizer
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser();
+                source = audioCtx.createMediaStreamSource(stream);
+                source.connect(analyser);
+                analyser.fftSize = 256;
+                drawVisualizer();
+
                 mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
                 audioChunks = [];
 
@@ -589,18 +676,55 @@ Requirements: Python, AWS, Docker...
 
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
+            if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+            currentAudio = new Audio(url);
 
             micBtn.classList.remove('processing');
             micBtn.classList.add('speaking');
 
-            audio.onended = () => {
+            currentAudio.onended = () => {
                 micBtn.classList.remove('speaking');
                 if (isComplete) {
                     showReport();
                 }
+                currentAudio = null;
             };
-            audio.play();
+            currentAudio.play();
+        }
+
+        function drawVisualizer() {
+            if (!analyser) return;
+            const canvas = document.getElementById('canvasFx');
+            const ctx = canvas.getContext('2d');
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+
+            const draw = () => {
+                if (!isRecording) { ctx.clearRect(0, 0, canvas.width, canvas.height); cancelAnimationFrame(animationId); return; }
+                animationId = requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const barWidth = (canvas.width / bufferLength) * 2.5;
+                let barHeight;
+                let x = 0;
+
+                // Center visualizer vertically
+                const centerY = canvas.height / 2;
+                const centerX = canvas.width / 2;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    barHeight = dataArray[i] * 0.8;
+                    ctx.fillStyle = `rgba(99, 102, 241, ${dataArray[i] / 255})`; // Indigo color for v2
+                    ctx.fillRect(centerX + x, centerY - barHeight / 2, barWidth, barHeight);
+                    ctx.fillRect(centerX - x - barWidth, centerY - barHeight / 2, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            };
+            draw();
         }
 
         async function showReport() {
@@ -621,6 +745,7 @@ Requirements: Python, AWS, Docker...
         // Spacebar shortcut
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !isRecording && interviewScreen.style.display === 'flex') {
+                if (currentAudio) { currentAudio.pause(); currentAudio = null; } // Stop AI speaking
                 isRecording = true;
                 safeStartRecording();
             }
@@ -635,4 +760,5 @@ Requirements: Python, AWS, Docker...
 
     </script>
 </body>
+
 </html>
