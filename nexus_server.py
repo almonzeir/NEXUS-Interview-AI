@@ -70,6 +70,7 @@ print("✅ Groq API connected")
 # ── Models ──
 STT_MODEL = "whisper-large-v3"       # OpenAI Whisper — MIT License
 LLM_MODEL = "llama-3.3-70b-versatile"  # Meta Llama 3.3 70B — Production, Apache 2.0
+LLM_FALLBACK = "llama-3.1-8b-instant"  # Fallback when rate-limited (separate token bucket)
 TTS_VOICE = "en-US-AndrewNeural"     # Professional male voice (Microsoft Andrew)
 
 print(f"👂 STT: {STT_MODEL}")
@@ -142,14 +143,24 @@ def clean_llm_response(text: str) -> str:
 
 
 def call_llm(messages: list, max_tokens: int = 1000, temperature: float = 0.7) -> str:
-    """Call the LLM via Groq and return cleaned response."""
-    response = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=messages,
-        max_tokens=max_tokens,
-        temperature=temperature
-    )
-    return clean_llm_response(response.choices[0].message.content)
+    """Call the LLM via Groq with automatic fallback on rate limit."""
+    for model in [LLM_MODEL, LLM_FALLBACK]:
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=temperature
+            )
+            if model != LLM_MODEL:
+                print(f"  ⚡ Used fallback model: {model}")
+            return clean_llm_response(response.choices[0].message.content)
+        except Exception as e:
+            if "429" in str(e) or "rate_limit" in str(e).lower():
+                print(f"  ⚠️ Rate limited on {model}, trying fallback...")
+                continue
+            raise
+    raise Exception("All models rate-limited. Please wait a few minutes and try again.")
 
 
 def call_llm_json(messages: list, max_tokens: int = 2000) -> dict:
