@@ -33,17 +33,27 @@ import traceback
 from pathlib import Path
 from datetime import datetime
 
-# ── Load API key ──
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
-if not GROQ_API_KEY:
+# ── Load API keys (supports multiple for rotation) ──
+GROQ_API_KEYS = []
+
+# Try environment variables first
+for key_name in ["GROQ_API_KEY", "GROQ_API_KEY_2", "GROQ_API_KEY_3"]:
+    key = os.environ.get(key_name, "")
+    if key:
+        GROQ_API_KEYS.append(key)
+
+# Fallback: load from .env file
+if not GROQ_API_KEYS:
     env_path = Path(__file__).parent / ".env"
     if env_path.exists():
         for line in env_path.read_text().splitlines():
-            if line.strip().startswith("GROQ_API_KEY="):
-                GROQ_API_KEY = line.split("=", 1)[1].strip().strip('"').strip("'")
-                break
+            line = line.strip()
+            if line.startswith("GROQ_API_KEY") and "=" in line:
+                key = line.split("=", 1)[1].strip().strip('"').strip("'")
+                if key and key not in GROQ_API_KEYS:
+                    GROQ_API_KEYS.append(key)
 
-if not GROQ_API_KEY:
+if not GROQ_API_KEYS:
     print("=" * 60)
     print("❌ GROQ_API_KEY not found!")
     print()
@@ -63,9 +73,10 @@ import uvicorn
 print("🧠 NEXUS — AI Interview Agent v3.0 (Research Edition)")
 print("=" * 55)
 
-# ── Groq Client ──
-client = Groq(api_key=GROQ_API_KEY)
-print("✅ Groq API connected")
+# ── Groq Client Pool (rotate on rate limit) ──
+groq_clients = [Groq(api_key=k) for k in GROQ_API_KEYS]
+current_client_idx = 0
+print(f"✅ Groq API connected ({len(groq_clients)} key(s) loaded)")
 
 # ── Models ──
 STT_MODEL = "whisper-large-v3"       # OpenAI Whisper — MIT License
@@ -146,29 +157,37 @@ def clean_llm_response(text: str) -> str:
 
 
 def call_llm(messages: list, max_tokens: int = 1000, temperature: float = 0.7) -> str:
-    """Call the LLM via Groq with automatic fallback cascade on rate limit."""
+    """Call the LLM via Groq with automatic key + model fallback cascade."""
+    global current_client_idx
     models_to_try = [LLM_MODEL] + LLM_FALLBACKS
+    
+    # Try each client (API key) with the primary model first, then fallbacks
     for model in models_to_try:
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature
-            )
-            if model != LLM_MODEL:
-                print(f"  ⚡ Used fallback model: {model}")
-            # Track which model was actually used (for research integrity)
-            if "models_used" not in session:
-                session["models_used"] = []
-            session["models_used"].append(model)
-            return clean_llm_response(response.choices[0].message.content)
-        except Exception as e:
-            if "429" in str(e) or "rate_limit" in str(e).lower():
-                print(f"  ⚠️ Rate limited on {model}, trying fallback...")
-                continue
-            raise
-    raise Exception("All models rate-limited. Please wait a few minutes and try again.")
+        for i in range(len(groq_clients)):
+            idx = (current_client_idx + i) % len(groq_clients)
+            try:
+                response = groq_clients[idx].chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+                if idx != current_client_idx:
+                    current_client_idx = idx  # Remember which key worked
+                    print(f"  🔑 Switched to API key #{idx + 1}")
+                if model != LLM_MODEL:
+                    print(f"  ⚡ Used fallback model: {model}")
+                # Track which model was actually used (for research integrity)
+                if "models_used" not in session:
+                    session["models_used"] = []
+                session["models_used"].append(model)
+                return clean_llm_response(response.choices[0].message.content)
+            except Exception as e:
+                if "429" in str(e) or "rate_limit" in str(e).lower():
+                    print(f"  ⚠️ Rate limited on key #{idx+1} / {model}, rotating...")
+                    continue
+                raise
+    raise Exception("All keys and models exhausted. Please wait a few minutes and try again.")
 
 
 def call_llm_json(messages: list, max_tokens: int = 2000) -> dict:
@@ -676,14 +695,24 @@ def save_session():
 # ══════════════════════════════════════════════════════════
 
 def transcribe_audio(audio_path: str) -> str:
-    """Transcribe audio using Groq Whisper."""
-    with open(audio_path, "rb") as f:
-        transcription = client.audio.transcriptions.create(
-            model=STT_MODEL,
-            file=f,
-            language="en"
-        )
-    return transcription.text.strip()
+    """Transcribe audio using Groq Whisper with key rotation."""
+    global current_client_idx
+    for i in range(len(groq_clients)):
+        idx = (current_client_idx + i) % len(groq_clients)
+        try:
+            with open(audio_path, "rb") as f:
+                transcription = groq_clients[idx].audio.transcriptions.create(
+                    model=STT_MODEL,
+                    file=f,
+                    language="en"
+                )
+            return transcription.text.strip()
+        except Exception as e:
+            if "429" in str(e) or "rate_limit" in str(e).lower():
+                print(f"  ⚠️ STT rate limited on key #{idx+1}, rotating...")
+                continue
+            raise
+    raise Exception("All keys rate-limited for STT.")
 
 
 async def _generate_speech(text: str, path: str) -> str:
