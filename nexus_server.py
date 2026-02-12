@@ -792,6 +792,75 @@ async def setup_interview(
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+# ── INTERVIEW: Start (Welcome + First Question) ──
+@app.post("/start")
+async def start_interview_endpoint():
+    """
+    Called once when the interview begins.
+    Generates a welcome greeting + first question as audio.
+    """
+    global session
+
+    if session["status"] not in ("ready", "interviewing"):
+        return JSONResponse(
+            {"error": "Interview not set up. Call /setup first."},
+            status_code=400
+        )
+
+    session["status"] = "interviewing"
+
+    try:
+        # Get candidate name from CV analysis
+        candidate_name = session.get("cv_analysis", {}).get("name", "")
+        first_question = session["questions"][0]["question"] if session["questions"] else "Tell me about yourself."
+
+        # Generate a natural welcome + first question
+        messages = [
+            {"role": "system", "content": """You are NEXUS, a professional AI interviewer conducting a voice-based competency assessment.
+Generate a warm but professional welcome greeting that:
+1. Welcomes the candidate by name (if available)
+2. Briefly introduces yourself as an AI interviewer
+3. Explains the format (voice-based, several questions, just be natural)
+4. Naturally transitions into the first question
+
+Keep it to 4-5 sentences total. Speak naturally. No markdown, no bullet points.
+End by asking the first question."""},
+            {"role": "user", "content": f"""Candidate name: {candidate_name or 'the candidate'}
+First question to ask: \"{first_question}\"
+
+Generate the welcome greeting that ends with this first question."""}
+        ]
+
+        welcome = call_llm(messages, max_tokens=250, temperature=0.7)
+        print(f"\U0001f399\ufe0f Welcome: {welcome}")
+
+        # Record in session
+        session["current_question"] = 1  # Mark first question as asked
+        session["conversation"].append({
+            "role": "assistant",
+            "content": welcome,
+            "timestamp": time.time(),
+            "type": "welcome"
+        })
+
+        # Generate audio
+        audio_path = await speak_async(welcome)
+
+        return FileResponse(
+            audio_path,
+            media_type="audio/mpeg",
+            headers={
+                "X-Response": welcome.replace('\n', ' ')[:500],
+                "X-Welcome": "true"
+            }
+        )
+
+    except Exception as e:
+        print(f"\u274c Start error: {e}")
+        traceback.print_exc()
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 # ── INTERVIEW: Voice Chat ──
 @app.post("/chat")
 async def chat_endpoint(file: UploadFile = File(...)):

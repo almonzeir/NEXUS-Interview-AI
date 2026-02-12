@@ -859,12 +859,28 @@
             document.getElementById('screenSetup').classList.remove('active');
             document.getElementById('screenInterview').classList.add('active');
 
-            // Trigger first question
-            fetch(API() + '/chat', { method: 'POST', body: new FormData() })
-                .then(r => r.json())
-                .then(d => {
-                    playAudio(d.audio_url);
-                    document.getElementById('liveTranscript').innerText = "Introduction";
+            // Trigger welcome greeting + first question
+            document.getElementById('liveTranscript').innerText = "AI Interviewer is speaking...";
+            document.getElementById('mic3d').classList.add('speaking');
+
+            fetch(API() + '/start', { method: 'POST' })
+                .then(r => {
+                    if (!r.ok) throw new Error('Start failed');
+                    return r.blob();
+                })
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const audio = new Audio(url);
+                    audio.play();
+                    audio.onended = () => {
+                        document.getElementById('mic3d').classList.remove('speaking');
+                        document.getElementById('liveTranscript').innerText = "Press SPACE to reply";
+                    };
+                })
+                .catch(e => {
+                    console.error(e);
+                    document.getElementById('liveTranscript').innerText = "Error starting interview";
+                    document.getElementById('mic3d').classList.remove('speaking');
                 });
 
             // Keyboard Shortcut
@@ -903,19 +919,42 @@
 
             mediaRec.onstop = async () => {
                 const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                const fd = new FormData();
-                fd.append('audio_file', blob, 'input.webm');
 
                 try {
+                    const fd = new FormData();
+                    fd.append('file', blob, 'input.webm');
+
                     const r = await fetch(API() + '/chat', { method: 'POST', body: fd });
-                    const d = await r.json();
 
-                    // Update UI
-                    document.getElementById('liveTranscript').innerText = d.transcript || "...";
-                    if (d.audio_url) playAudio(d.audio_url);
+                    if (!r.ok) throw new Error('Chat failed');
 
-                    // Update Score Feed
-                    if (d.scores) addScoreCard(d.scores);
+                    // Read metadata from response headers
+                    const transcript = r.headers.get('X-Transcript') || '...';
+                    const score = r.headers.get('X-Score') || '';
+                    const isComplete = r.headers.get('X-Complete') === 'true';
+
+                    // Update transcript display
+                    document.getElementById('liveTranscript').innerText = transcript;
+
+                    // Play the audio response
+                    const audioBlob = await r.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    document.getElementById('mic3d').classList.add('speaking');
+                    audio.play();
+                    audio.onended = () => {
+                        document.getElementById('mic3d').classList.remove('speaking');
+                        if (isComplete) {
+                            document.getElementById('liveTranscript').innerText = "Interview Complete! Click 'Show Report'";
+                        } else {
+                            document.getElementById('liveTranscript').innerText = "Press SPACE to reply";
+                        }
+                    };
+
+                    // Update score display if available
+                    if (score) {
+                        document.getElementById('avgDisplay').innerText = parseFloat(score).toFixed(1);
+                    }
 
                 } catch (e) {
                     console.error(e);
