@@ -8,3 +8,5 @@ pydantic
 anyio
 httpx
 distro
+tenacity
+aiofiles
