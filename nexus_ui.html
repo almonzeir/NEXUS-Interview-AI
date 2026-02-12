@@ -977,7 +977,7 @@
                 })
                 .catch(e => {
                     console.error(e);
-                    document.getElementById('liveTranscript').innerText = "Error starting interview";
+                    document.getElementById('liveTranscript').innerText = "Start error: " + e.message;
                     document.getElementById('mic3d').classList.remove('speaking');
                 });
 
@@ -1061,7 +1061,7 @@
 
                 } catch (e) {
                     console.error(e);
-                    document.getElementById('liveTranscript').innerText = "Error processing audio";
+                    document.getElementById('liveTranscript').innerText = "Chat error: " + e.message;
                 }
             };
         }
