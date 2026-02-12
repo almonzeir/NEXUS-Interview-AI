@@ -175,9 +175,13 @@ This system is evaluated through a comparative study:
 |---|---|---|
 | Backend | Python 3.11 / FastAPI | API routing, session management |
 | Speech-to-Text | Whisper Large V3 (Groq) | Candidate voice transcription |
-| LLM | Llama 3.3 70B (Groq) | Reasoning, scoring, question generation |
+| LLM | Llama 3.3 70B (Primary) + Qwen 32B (Fallback) | Reasoning, scoring, question generation |
 | Text-to-Speech | Microsoft Edge-TTS | Natural voice responses |
 | Frontend | HTML5 / CSS / JavaScript | Interview dashboard & report |
+
+### Resilience Features
+- **Triple-Model Fallback Cascade:** Automatically switches models (Llama 70B → Qwen 32B → Llama 8B) if rate limits are hit.
+- **Multi-Key Rotation:** Automatically rotates through 3 API keys to maximize free-tier throughput.
 
 ---
 
@@ -187,7 +191,8 @@ This system is evaluated through a comparative study:
 1. Push this repo to GitHub
 2. Connect to [Railway.app](https://railway.app)
 3. Add `GROQ_API_KEY` as an environment variable
-4. Deploy — Railway auto-detects the `Procfile`
+4. (Optional) Add `GROQ_API_KEY_2` and `GROQ_API_KEY_3` for **3x daily rate limits** (≈900K tokens/day)
+5. Deploy — Railway auto-detects the `Procfile`
 
 ---
 

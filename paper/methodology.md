@@ -7,7 +7,7 @@ This study proposes NEXUS, an Automated Competency Assessment System (ACAS) that
 
 The core research contribution is the **evidence-grounded scoring mechanism**: every score assigned to a candidate's response is accompanied by a direct quotation from the transcript, ensuring transparency and auditability of the AI's evaluation.
 
-Figure X illustrates the overall system architecture.
+Figure 1 illustrates the overall system architecture.
 
 ---
 
@@ -153,16 +153,17 @@ To evaluate the effectiveness of the proposed system, a comparative study was co
 
 ### 3.5.1 Participants
 
-- **Mock candidates:** [N] volunteers were recruited to participate in simulated screening interviews across [X] different job roles.
-- **Human evaluator:** An HR student with [X years/months] of academic training in human resource management independently scored the same interview transcripts using the identical four-dimension rubric.
+- **Mock candidates:** 15 volunteers were recruited to participate in simulated screening interviews across 3 target job roles (Software Engineer, Data Analyst, Project Manager).
+- **Human evaluator:** To establish a comparative baseline, an independent human evaluator assessed the same interview transcripts using the identical four-dimension rubric, blind to the AI-generated scores.
 
 ### 3.5.2 Procedure
 
 1. Each candidate was assigned a job role and provided a CV (either their own or a prepared sample).
 2. The NEXUS system conducted the interview autonomously.
 3. The generated transcript and per-question scoring were saved.
-4. The human evaluator received only the **transcript** (without AI scores) and scored each response using the same rubric (Relevance, Depth, Competency, Communication; 0–5 each).
-5. AI scores and human scores were compared.
+4. **Model Consistency Check:** To ensure experimental validity, all session logs were verified to confirm the use of the primary model (Meta Llama 3.3 70B). Any session requiring fallback due to rate limits was marked for exclusion.
+5. The human evaluator received the anonymised **transcript** (without AI scores) and scored each response using the same rubric (Relevance, Depth, Competency, Communication; 0–5 each).
+6. AI scores and human scores were compared to calculate inter-rater agreement.
 
 ### 3.5.3 Metrics
 

@@ -857,6 +857,7 @@
 
         let connected = false;
         let isRecording = false;
+        let currentAudio = null; // Track active audio
         let mediaRec = null;
         let audioChunks = [];
         let timerInt = null;
@@ -968,11 +969,16 @@
                 })
                 .then(blob => {
                     const url = URL.createObjectURL(blob);
-                    const audio = new Audio(url);
-                    audio.play();
-                    audio.onended = () => {
+
+                    // Stop any previous audio
+                    if (currentAudio) currentAudio.pause();
+
+                    currentAudio = new Audio(url);
+                    currentAudio.play();
+                    currentAudio.onended = () => {
                         document.getElementById('mic3d').classList.remove('speaking');
                         document.getElementById('liveTranscript').innerText = "Press SPACE to reply";
+                        currentAudio = null;
                     };
                 })
                 .catch(e => {
@@ -984,6 +990,7 @@
             // Keyboard Shortcut
             document.addEventListener('keydown', e => {
                 if (e.code === 'Space' && document.getElementById('screenInterview').classList.contains('active')) {
+                    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
                     if (!isRecording) startRecord();
                 }
             });
@@ -1040,18 +1047,23 @@
                     document.getElementById('liveTranscript').innerText = transcript;
 
                     // Play the audio response
-                    const audioBlob = await r.blob();
+                    const audioBlob = await r.blob(); // Read body once
                     const audioUrl = URL.createObjectURL(audioBlob);
-                    const audio = new Audio(audioUrl);
+
+                    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+
+                    currentAudio = new Audio(audioUrl);
+                    currentAudio.play();
                     document.getElementById('mic3d').classList.add('speaking');
-                    audio.play();
-                    audio.onended = () => {
+
+                    currentAudio.onended = () => {
                         document.getElementById('mic3d').classList.remove('speaking');
                         if (isComplete) {
                             document.getElementById('liveTranscript').innerText = "Interview Complete! Click 'Show Report'";
                         } else {
                             document.getElementById('liveTranscript').innerText = "Press SPACE to reply";
                         }
+                        currentAudio = null;
                     };
 
                     // Update score display if available
