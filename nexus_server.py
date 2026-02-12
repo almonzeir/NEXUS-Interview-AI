@@ -70,7 +70,7 @@ print("✅ Groq API connected")
 # ── Models ──
 STT_MODEL = "whisper-large-v3"       # OpenAI Whisper — MIT License
 LLM_MODEL = "llama-3.3-70b-versatile"  # Meta Llama 3.3 70B — Production, Apache 2.0
-TTS_VOICE = "en-US-GuyNeural"        # Professional male voice
+TTS_VOICE = "en-US-AndrewNeural"     # Professional male voice (Microsoft Andrew)
 
 print(f"👂 STT: {STT_MODEL}")
 print(f"🧠 LLM: {LLM_MODEL}")
