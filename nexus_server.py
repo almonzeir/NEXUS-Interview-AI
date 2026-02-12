@@ -327,72 +327,116 @@ Generate the interview questions."""}
 # ══════════════════════════════════════════════════════════
 # STEP 3: PER-ANSWER SCORING (Evidence-Grounded)
 # ══════════════════════════════════════════════════════════
+# Upgrades for Research Accuracy:
+#   1. Few-Shot Anchor Examples (model knows what each score level looks like)
+#   2. Chain-of-Thought Reasoning (think step-by-step before scoring)
+#   3. Low Temperature (0.2) for deterministic, reproducible scores
 
 SCORING_RUBRIC = {
-    "relevance": "Does the answer directly address the question asked? (0: completely off-topic, 5: directly and fully addresses it)",
-    "depth": "Does the candidate provide specific examples, details, or use the STAR method? (0: no specifics, 5: rich detailed examples)",
-    "competency": "Does the answer demonstrate the skill or competency being assessed? (0: no evidence of skill, 5: strong evidence)",
-    "communication": "Is the answer clear, well-structured, and professionally communicated? (0: incoherent, 5: exceptionally clear)"
+    "relevance": "Does the answer directly address the question asked?",
+    "depth": "Does the candidate provide specific examples, metrics, or STAR method?",
+    "competency": "Does the answer demonstrate the target skill or expertise?",
+    "communication": "Is the answer clear, structured, and professionally delivered?"
 }
+
+# Few-shot anchor examples for calibration
+SCORE_ANCHORS = """
+SCORING GUIDE (use these anchors to calibrate):
+
+SCORE 1 (Very Poor):
+  Question: "Tell me about your experience with Python."
+  Answer: "Yeah I know Python."
+  Why 1: No specifics, no examples, single vague sentence.
+
+SCORE 2 (Poor):
+  Question: "Tell me about your experience with Python."
+  Answer: "I've used Python for some projects in university. It was good."
+  Why 2: Mentions usage context but zero specifics — no project names, no details.
+
+SCORE 3 (Adequate):
+  Question: "Tell me about your experience with Python."
+  Answer: "I used Python in my final year project to build a web scraper that collected data from 3 websites."
+  Why 3: Has a concrete example with some detail, but lacks depth on challenges/impact.
+
+SCORE 4 (Good):
+  Question: "Tell me about your experience with Python."
+  Answer: "I built a REST API using FastAPI for my capstone project that handled product inventory for a local business. I used SQLAlchemy for the ORM and deployed it on Railway."
+  Why 4: Specific project, named technologies, real-world application. Missing quantitative impact.
+
+SCORE 5 (Excellent):
+  Question: "Tell me about your experience with Python."
+  Answer: "In my internship at TechCorp, I developed a data pipeline in Python using Pandas and Airflow that automated report generation for 200+ clients, reducing manual work by 15 hours per week. I also wrote unit tests with pytest achieving 92% coverage."
+  Why 5: Real company, specific tools, quantitative impact (200+ clients, 15hrs saved, 92% coverage), demonstrates depth.
+"""
 
 
 def score_answer(question_data: dict, answer_text: str) -> dict:
     """
-    Score a candidate's answer on the 4 rubric dimensions.
-    EVERY score must include an evidence quote from the answer.
-    This is the 'evidence-grounded' part of the research.
+    Score a candidate's answer using Chain-of-Thought + Few-Shot calibration.
+    Uses temperature=0.2 for reproducible, deterministic scoring.
     """
     messages = [
-        {"role": "system", "content": f"""You are an expert interview evaluator.
-Score the candidate's answer using the following rubric dimensions (0-5 each):
+        {"role": "system", "content": f"""You are an expert interview evaluator for a research study.
 
+RUBRIC DIMENSIONS (score each 0-5):
 {json.dumps(SCORING_RUBRIC, indent=2)}
 
-CRITICAL RULES:
-1. Every score MUST include a direct quote from the candidate's answer as evidence.
-2. If the candidate didn't say anything relevant, quote what they DID say and explain why it's insufficient.
-3. Be fair and objective. Do NOT score based on accent, grammar errors, or speaking style.
-4. Score based on CONTENT and SUBSTANCE only.
+{SCORE_ANCHORS}
 
-Return EXACTLY this JSON format:
+EVALUATION PROTOCOL (Chain-of-Thought):
+Before assigning scores, you MUST think through these steps:
+1. IDENTIFY what the question is specifically asking for.
+2. EXTRACT the key claims and evidence from the candidate's answer.
+3. COMPARE the answer against the scoring anchors above — which level does it most closely match?
+4. ASSIGN scores with direct transcript quotes as evidence.
+5. DETERMINE if a follow-up is needed (score < 3 on any dimension).
+
+CRITICAL RULES:
+- Every score MUST include a DIRECT QUOTE from the candidate's answer as evidence.
+- If the candidate gave no relevant content, quote what they said and explain the gap.
+- Do NOT penalise accent, grammar errors, or speaking style — score CONTENT only.
+- Be calibrated: a score of 3 is AVERAGE, not bad. Reserve 5 for truly exceptional answers.
+- Do NOT inflate scores. Most real interview answers fall between 2-4.
+
+Return EXACTLY this JSON (no other text):
 {{
+  "chain_of_thought": "Your step-by-step reasoning before scoring",
   "scores": {{
     "relevance": {{
       "score": 0,
       "evidence": "direct quote from answer",
-      "reasoning": "why this score"
+      "reasoning": "why this score, referencing anchor level"
     }},
     "depth": {{
       "score": 0,
       "evidence": "direct quote from answer",
-      "reasoning": "why this score"
+      "reasoning": "why this score, referencing anchor level"
     }},
     "competency": {{
       "score": 0,
       "evidence": "direct quote from answer",
-      "reasoning": "why this score"
+      "reasoning": "why this score, referencing anchor level"
     }},
     "communication": {{
       "score": 0,
       "evidence": "direct quote from answer",
-      "reasoning": "why this score"
+      "reasoning": "why this score, referencing anchor level"
     }}
   }},
   "average_score": 0.0,
   "needs_follow_up": true,
-  "follow_up_reason": "reason if follow-up is needed"
-}}
-
-Return ONLY valid JSON, no other text."""},
+  "follow_up_reason": "reason if any dimension scored below 3"
+}}"""},
         {"role": "user", "content": f"""Question asked: {question_data.get('question', '')}
 Target area being assessed: {question_data.get('target_area', '')}
 What a good answer demonstrates: {question_data.get('rubric_focus', '')}
 
 Candidate's answer: "{answer_text}"
 
-Score this answer."""}
+Think step-by-step, then score this answer."""}
     ]
-    result = call_llm_json(messages, max_tokens=1000)
+    # Temperature 0.2 for deterministic, reproducible scoring
+    result = call_llm_json(messages, max_tokens=1500)
 
     # Calculate average if not provided
     if "scores" in result and "average_score" not in result:
