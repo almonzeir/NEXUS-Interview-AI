@@ -804,6 +804,10 @@
                             <div style="color:var(--text-3); font-size:0.8rem" id="recTimer">00:00</div>
                         </div>
 
+                        <!-- VISUALIZER CANVAS -->
+                        <canvas id="canvasFx"
+                            style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:100%; height:100%; pointer-events:none; opacity:0.6; z-index:0;"></canvas>
+
                         <!-- 3D MIC ELEMENT -->
                         <div class="mic-wrapper" id="mic3d">
                             <div class="pulse-ring"></div>
@@ -862,6 +866,8 @@
         let audioChunks = [];
         let timerInt = null;
         let seconds = 0;
+
+        let audioCtx, analyser, source, animationId;
 
         // Auto-detect Server URL
         const API = () => document.getElementById('serverUrl').value.replace(/\/$/, '');
@@ -1009,6 +1015,15 @@
 
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             mediaRec = new MediaRecorder(stream);
+
+            // Connect Visualizer
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
+            analyser.fftSize = 256;
+            drawVisualizer();
+
             audioChunks = [];
 
             mediaRec.ondataavailable = e => audioChunks.push(e.data);
@@ -1076,6 +1091,46 @@
                     document.getElementById('liveTranscript').innerText = "Chat error: " + e.message;
                 }
             };
+        }
+
+        function drawVisualizer() {
+            if (!analyser) return;
+            const canvas = document.getElementById('canvasFx');
+            const ctx = canvas.getContext('2d');
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+
+            const draw = () => {
+                if (!isRecording) { ctx.clearRect(0, 0, canvas.width, canvas.height); cancelAnimationFrame(animationId); return; }
+                animationId = requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const barWidth = (canvas.width / bufferLength) * 2.5;
+                let barHeight;
+                let x = 0;
+
+                // Center visualizer vertically
+                const centerY = canvas.height / 2;
+                const centerX = canvas.width / 2;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    barHeight = dataArray[i] * 0.8; // Scale sensitivity
+
+                    // Cyan/Purple Gradient
+                    ctx.fillStyle = `rgba(0, 255, 255, ${dataArray[i] / 255})`; // Opacity based on volume
+
+                    // Draw mirrored bars
+                    ctx.fillRect(centerX + x, centerY - barHeight / 2, barWidth, barHeight);
+                    ctx.fillRect(centerX - x - barWidth, centerY - barHeight / 2, barWidth, barHeight);
+
+                    x += barWidth + 1;
+                }
+            };
+            draw();
         }
 
         function playAudio(url) {
